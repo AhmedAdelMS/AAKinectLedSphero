@@ -18,6 +18,7 @@ using System.Net.Sockets;
 using InTheHand.Net.Sockets;
 using System.Threading;
 using SpheroNET;
+using System.ComponentModel;
 
 
 
@@ -28,18 +29,42 @@ namespace AAKinectLedSphero
     /// </summary>
     public partial class MainWindow : Window
     {
-        SpheroConnector spheroConnector = new SpheroConnector();
+        BackgroundWorker backgroundWorker = new BackgroundWorker();
+        SpheroConnector spheroConnector;
         Sphero sphero = null;
+        string currentMessage;
 
         public MainWindow()
         {
             InitializeComponent();
+            backgroundWorker.DoWork +=              backgroundWorker_DoWork;
+            backgroundWorker.WorkerReportsProgress = true;
+            backgroundWorker.RunWorkerCompleted +=  backgroundWorker_RunWorkerCompleted;
+            backgroundWorker.ProgressChanged += backgroundWorker_ProgressChanged;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            TBLog.Text += "\n Scanning for Sphero";
-            spheroConnector.Scan();
+            TBLog.Text = currentMessage; 
+        }
+        void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (!(e.Error == null))
+            {
+                updateStatus("Error: " + e.Error.Message);
+            }
+        }
+
+        
+        void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            // Do the heavy lifting here
+            worker.ReportProgress(1);
+            updateStatus(" Initializing the Sphero Connector");
+            spheroConnector = new SpheroConnector(updateStatus);
+            updateStatus("Scanning for Sphero");
+            spheroConnector.Scan(updateStatus);
             int spheroIndex = 0;
             bool spheroFound = false;
 
@@ -48,82 +73,54 @@ namespace AAKinectLedSphero
                 var deviceNames = spheroConnector.DeviceNames;
                 for (int i = 0; i < deviceNames.Count; i++)
                 {
-                    if(deviceNames[i].Contains("Sphero"))
+                    updateStatus("Attempt " + i + " to connect to Sphero");
+                    if (deviceNames[i].Contains("Sphero"))
                     {
-                        TBLog.Text += "\n Sphero FOund";
+                        updateStatus("\n Sphero Found");
                         spheroIndex = i;
                         spheroFound = true;
                         break;
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                TBLog.Text = " Exception:\n" + ex.Message;
+                updateStatus(" Exception:\n" + ex.Message);
             }
-            if(spheroFound)
+            if (spheroFound)
             {
-                sphero = spheroConnector.Connect(spheroIndex);
-                TBLog.Text += "\n Sphero COnnected";
-
-            }
-
-
-            /*
-            String logEntry = "";
-            logEntry += "\n Creating a BlueTooth client";
-            BluetoothClient client = new BluetoothClient();
-            List<BluetoothDeviceInfo> devices = new List<BluetoothDeviceInfo>();
-            logEntry += "\n Getting the devices' info";
-            devices.AddRange(client.DiscoverDevices());
-            
-            foreach (BluetoothDeviceInfo device in devices)
-            {
-                logEntry += "\n Processing " + device.DeviceName;
-                if (device.DeviceName.Contains("Sphero"))
+                try
                 {
-                    logEntry += "\n Getting Address";
-                    BluetoothAddress addr = device.DeviceAddress;
-                    Guid serviceClass = BluetoothService.SerialPort;
-                    logEntry += "\n Creating End Point";
-                    var ep = new BluetoothEndPoint(addr, serviceClass);
-                    try
-                    {
-                        int retries = 5;
-                        for (int i = 0; i < retries; i++)
-                        {
-                            try
-                            {
-                                logEntry += "\n Trying to connect to " + device.DeviceName;
-                                client.Connect(ep);
-                                break;
-                            }
-                            catch (Exception ex)
-                            {
-                                logEntry += "\n Caught an exception" + ex.Message;
-                                if (i == (retries-1))
-                                    throw new Exception(string.Format("Could not connect after {0} retries", retries), ex);
-                            }
-                        }
-                        logEntry += "\n and we have a connection :-) ";
-                        NetworkStream stream = client.GetStream();
-                        stream.ReadTimeout = 100;
-                        logEntry += "\n GOt the stream :-) ";
-                        
-                    }
-                    catch (Exception ex)
-                    {
-                        logEntry += "\n Exception " + ex.Message;
-                        TBLog.Text = logEntry;
-                    }
+                    sphero = spheroConnector.Connect(spheroIndex);
+                    updateStatus("\n Sphero Connected"); 
                 }
-                TBLog.Text = logEntry;
+                catch (Exception ex)
+                {
+                    updateStatus(" Exception:\n" + ex.Message);
+                }
             }
-            */
+
+        }
+        void updateStatus(string text)
+        {
+            currentMessage = text;
+            backgroundWorker.ReportProgress(1);
+        }
+        
+
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            if (backgroundWorker.IsBusy != true)
+            {
+                backgroundWorker.RunWorkerAsync();
+            }
+
+
         }
         string updateUI(string text)
         {
-            TBLog.Text = text;
+            currentMessage = text;
             return text;
         }
 

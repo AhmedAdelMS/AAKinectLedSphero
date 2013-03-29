@@ -12,7 +12,8 @@ namespace SpheroNET
 {
     public class SpheroConnector
     {
-
+        public delegate void updateStatusDelegate(string text);
+        updateStatusDelegate updateStatus;
         List<BluetoothDeviceInfo> _devices;
         List<string> _deviceNames;
         BluetoothClient _client;
@@ -23,9 +24,9 @@ namespace SpheroNET
             set { _deviceNames = value; }
         }
 
-        public SpheroConnector()
+        public SpheroConnector(updateStatusDelegate pUpdateStatus)
         {
-            Initialize();
+            Initialize(pUpdateStatus);
         }
 
         public Sphero Connect(int index)
@@ -62,18 +63,19 @@ namespace SpheroNET
             _devices.Clear();
         }
 
-        public void Scan()
+        public void Scan(updateStatusDelegate pUpdateStatus)
         {
-            Initialize();
+            Initialize(pUpdateStatus);
             DiscoverDevices();
         }
 
-        private void Initialize()
+        private void Initialize(updateStatusDelegate pUpdateStatus)
         {
             _devices = new List<BluetoothDeviceInfo>();
             _deviceNames = new List<string>();
             _client = new BluetoothClient();
             _client.InquiryLength = TimeSpan.FromSeconds(2);
+            updateStatus = pUpdateStatus;
         }
 
         private NetworkStream Connect(BluetoothDeviceInfo device, int retries)
@@ -81,11 +83,13 @@ namespace SpheroNET
 
             BluetoothAddress addr = device.DeviceAddress;
             Guid serviceClass = BluetoothService.SerialPort;
+            updateStatus("Creating BlueTOoth End Point");
             var ep = new BluetoothEndPoint(addr, serviceClass);
             for (int i = 0; i < retries; i++)
             {
                 try
                 {
+                    updateStatus("Starting attempt #" + i + " to connect to Sphero");
                     _client.Connect(ep);
                     break;
                 }

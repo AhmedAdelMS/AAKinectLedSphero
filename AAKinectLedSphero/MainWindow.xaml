@@ -4,7 +4,7 @@
         Title="Ahmed Adel's Kinect Led Sphero Demo" Height="424.311" Width="582.589">
     <Grid>
         <Button Content="Connect" HorizontalAlignment="Left" Height="26" Margin="10,19,0,0" VerticalAlignment="Top" Width="121" Click="Button_Click"/>
-        <TextBlock x:Name="TBLog" HorizontalAlignment="Left" Height="303" Margin="152,19,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="404"/>
+        <TextBlock x:Name="TBLog" HorizontalAlignment="Left" Height="47" Margin="152,19,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="404"/>
         <Button x:Name="BSetColor" Content="SetColor" HorizontalAlignment="Left" Height="23" Margin="11,60,0,0" VerticalAlignment="Top" Width="120" Click="BSetColor_Click"/>
         <Slider x:Name="SLDRRed" HorizontalAlignment="Left" Height="21" Margin="11,94,0,0" VerticalAlignment="Top" Width="120" Maximum="255" SmallChange="1"/>
         <Slider x:Name="SLDRGreen" HorizontalAlignment="Left" Height="21" Margin="11,130,0,0" VerticalAlignment="Top" Width="120" Maximum="255" SmallChange="1"/>
